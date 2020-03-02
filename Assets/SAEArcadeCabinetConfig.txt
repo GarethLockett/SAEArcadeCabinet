@@ -1,0 +1,32 @@
+{
+    "playercontrols": [
+        {
+            "colorId": 1,
+            "joystickId": 1,
+            "buttonIds": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+            ]
+        },
+        {
+            "colorId": 2,
+            "joystickId": 2,
+            "buttonIds": [
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7
+            ]
+        }
+    ]
+}
