@@ -11,6 +11,12 @@ using UnityEngine;
     Description:    
                     NOTES:
                             - Make sure old InputManager has been set up...
+
+    [ TEST ]
+    YELLOW = joystick 2
+    BLUE = joystick 4
+    RED = joystick 3
+    GREEN = joystick 1
 */
 
 public abstract class SAEArcadeCabinetInput //: MonoBehaviour
@@ -297,17 +303,17 @@ if( playerControls.joystickId <= 0 ) { playerControls.joystickId = 1; } // TEST 
         int joystickId = int.Parse( tmpStrParts[ 0 ] );
         int buttonId = int.Parse( tmpStrParts[ 1 ] );
 
-        if( joystickId < 1 || joystickId >= SAEArcadeCabinetInput.playerInputs.Length ) { return; }
+        if( joystickId < 1 || joystickId > SAEArcadeCabinetInput.playerInputs.Length ) { return; }
 
         if( Input.GetKey( keyCode ) == true )
             //{ SAEArcadeCabinetInput.joystickKeyCodePressedButton.Invoke( int.Parse( tmpStrParts[ 0 ] ), int.Parse( tmpStrParts[ 1 ] ) ); }
         {
             //SAEArcadeCabinetInput.joystickKeyCodePressedButton.Invoke( joystickId, int.Parse( tmpStrParts[ 1 ] ) );
-            if( SAEArcadeCabinetInput.playerInputs[ joystickId ].buttonsPressed.Contains( keyCode ) == false )
+            if( SAEArcadeCabinetInput.playerInputs[ joystickId  - 1 ].buttonsPressed.Contains( keyCode ) == false )
             {
                 // Invoke pressed event.
                 SAEArcadeCabinetInput.joystickKeyCodePressedButton?.Invoke( joystickId, buttonId );
-                SAEArcadeCabinetInput.playerInputs[ joystickId ].buttonsPressed.Add( keyCode ); // Add keyCode to buttons pressed.
+                SAEArcadeCabinetInput.playerInputs[ joystickId - 1 ].buttonsPressed.Add( keyCode ); // Add keyCode to buttons pressed.
             }
             else
             {
@@ -315,11 +321,11 @@ if( playerControls.joystickId <= 0 ) { playerControls.joystickId = 1; } // TEST 
                 SAEArcadeCabinetInput.joystickKeyCodeHelddButton?.Invoke( joystickId, buttonId );
             }
         }
-        else if( SAEArcadeCabinetInput.playerInputs[ joystickId ].buttonsPressed.Contains( keyCode ) == true )
+        else if( SAEArcadeCabinetInput.playerInputs[ joystickId - 1 ].buttonsPressed.Contains( keyCode ) == true )
         {
             // Invoke release event.
             SAEArcadeCabinetInput.joystickKeyCodeReleasedButton?.Invoke( joystickId, buttonId );
-            SAEArcadeCabinetInput.playerInputs[ joystickId ].buttonsPressed.Remove( keyCode ); // Remove keyCode from buttons pressed.
+            SAEArcadeCabinetInput.playerInputs[ joystickId - 1 ].buttonsPressed.Remove( keyCode ); // Remove keyCode from buttons pressed.
         }
     }
 

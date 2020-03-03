@@ -19,7 +19,7 @@ public class SAEArcadeCabinetInputTest : MonoBehaviour
     private void Start()
     {
         SAEArcadeCabinetInput.ActivateInputEvents();
-        //SAEArcadeCabinetInput.playerPressedButton += this.ButtonPressed;
+
         SAEArcadeCabinetInput.joystickKeyCodePressedButton += this.ButtonKeyCodePressed;
         SAEArcadeCabinetInput.joystickKeyCodeHelddButton += this.ButtonKeyCodeHeld;
         SAEArcadeCabinetInput.joystickKeyCodeReleasedButton += this.ButtonKeyCodeReleased;
@@ -40,7 +40,7 @@ public class SAEArcadeCabinetInputTest : MonoBehaviour
         //Debug.Log( "joystick1: " + SAEArcadeCabinetInput.JoyStickAxis( 1 ) +", " + SAEArcadeCabinetInput.JoyStickAxis( 1, false ) );
         //Debug.Log( Input.GetAxis( "Joystick1_xAxis" ) );
 
-        //if( SAEArcadeCabinetInput.JoyStickButton( KeyCode.Joystick1Button0 ) == true ) { SAEArcadeCabinetInput.DeactivateInputEvents(); }
+        //if( SAEArcadeCabinetInput.JoyStickButton( KeyCode.Joystick4Button0 ) == true ) { Debug.Log( "HERE" ); }// { SAEArcadeCabinetInput.DeactivateInputEvents(); }
     }
 
     //private void ButtonPressed( SAEArcadeCabinetInput.SAEArcadeCabinetPlayerControls playerControls, SAEArcadeCabinetInput.SAEArcadeCabinetButton buttonPressed )
