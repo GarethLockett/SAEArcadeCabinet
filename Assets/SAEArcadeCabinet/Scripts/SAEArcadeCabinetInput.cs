@@ -1,5 +1,6 @@
 ﻿using System;
-using System.IO;
+//using System.IO;
+//using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,88 +20,30 @@ using UnityEngine;
     GREEN = joystick 1
 */
 
-public abstract class SAEArcadeCabinetInput //: MonoBehaviour
+public abstract class SAEArcadeCabinetInput
 {
     // Events
-    //public static Action<SAEArcadeCabinetPlayerControls,SAEArcadeCabinetButton> playerPressedButton;
+    public static Action<int,int> joystickKeyCodePressedButton;         // <Joystick id, Button id> Invoked when a button has started to be pressed.
+    public static Action<int, int> joystickKeyCodeHelddButton;          // <Joystick id, Button id> Invoked each frame while a button is held down.
+    public static Action<int, int> joystickKeyCodeReleasedButton;       // <Joystick id, Button id> Invoked when a button has stopped been pressed.
 
-    public static Action<int,int> joystickKeyCodePressedButton; // <Joystick id, Button id> Started pressing
-    public static Action<int, int> joystickKeyCodeHelddButton; // <Joystick id, Button id> Holding down
-    public static Action<int, int> joystickKeyCodeReleasedButton; // <Joystick id, Button id> Stopped pressing
+    public static Action<int, Vector2> joystickAxisChanged;             // <Joystick id, Vector2 XY axis values> Invoked when an axis value changed.
 
-    public static Action<int, Vector2> joystickAxisChanged;         // <Joystick id, Vector2 XY axis values>
-
-    /*
     // Sub classes
-    [Serializable]
-    public class SAEArcadeCabinetPlayerControls
+    //public struct
+
+    private class PlayerInput
     {
-        // Properties
-        public SAEArcadeCabinetColorId colorId;
-        public sbyte joystickId = 1; // 1, 2, 3, 4
-        public sbyte[] buttonIds;
-
-        // Constructor
-        public SAEArcadeCabinetPlayerControls( SAEArcadeCabinetColorId colorId )
-        {
-            this.colorId = colorId;
-            this.joystickId = -1;
-            this.buttonIds = new sbyte[ Enum.GetNames( typeof( SAEArcadeCabinetButton ) ).Length ];
-            for( int i = 0; i < this.buttonIds.Length; i++ ) { this.buttonIds[ i ] = ( sbyte ) i; }
-        }
-
-        // Methods
-        public int GetButtonId( SAEArcadeCabinetButton buttonId )
-        {
-            int id = ( int ) buttonId;
-            if( id < 0 || id >= this.buttonIds.Length ) { return -1; }
-            return this.buttonIds[ id ];
-        }
-
-        public void CheckEvents()
-        {
-            // Sanity checks.
-            if( this.colorId == SAEArcadeCabinetColorId.UNKNOWN ) { return; }
-            if( this.joystickId < 1 ) { return; }
-            if( this.buttonIds == null ) { return; }
-            if( this.buttonIds.Length == 0 ) { return; }
-
-            // Check for button presses. Invoke an event if button is found to be pressed.
-            if( SAEArcadeCabinetInput.playerPressedButton != null ) // Make sure something is listening for playerPressedButton events.
-            {
-                for( int b=0; b<this.buttonIds.Length; b++ )
-                {
-                    if( this.buttonIds[ b ] < 0 ) { continue; }
-                    string buttonName = "Joystick" + this.joystickId.ToString() + "_Button_" + this.buttonIds[ b ].ToString();
-                    //if( SAEArcadeCabinetInput.IsButtonAvailable( buttonName ) == false ) { continue; }
-                    if( Input.GetButton( buttonName ) == true )
-                        { SAEArcadeCabinetInput.playerPressedButton.Invoke( this, ( SAEArcadeCabinetButton ) this.buttonIds[ b ] ); }
-                }
-            }
-        }
+        public int playerId;
+        public List<KeyCode> buttonsPressed = new List<KeyCode>();
+        public Vector2 lastJoystickPosition;
     }
-    [Serializable]
-    private class SAEArcadeCabinetAllInputControls { public SAEArcadeCabinetPlayerControls[] playercontrols; }
+    private static PlayerInput[] playerInputs;
 
-    // Enumerators
-    public enum SAEArcadeCabinetColorId { UNKNOWN, YELLOW, BLUE, RED, GREEN }
-    public enum SAEArcadeCabinetButton { BUTTON0 = 0, BUTTON1 = 1, BUTTON2 = 2, BUTTON3 = 3, BUTTON4 = 4, BUTTON5 = 5, BUTTON6 = 6, BUTTON7 = 7 }
-
-    // Properties
-    private static SAEArcadeCabinetAllInputControls saeArcadeCabinetAllInputControls;           // The currently loaded controls for all 4 players (null if not loaded yet)
-    */
+    // Constants
+    public const int UNKNOWNPLAYER = -1, YELLOWPLAYER = 0, BLUEPLAYER = 1, REDPLAYER = 2, GREENPLAYER = 3;
 
     // Methods
-    /*
-    public SAEArcadeCabinetInput() // Constructor .. used?
-    {
-        // Check if the globally accessible inputs have already been initialized.
-        if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls == null ) { SAEArcadeCabinetInput.InitializeInputs(); }
-
-        //Debug.Log( "CONSTRUCTOR" );
-    }
-    */
-
     public static void ActivateInputEvents()
     {
         // HACK: Tap into the applications' onBeforeRender event to check inputs ;D
@@ -115,21 +58,6 @@ public abstract class SAEArcadeCabinetInput //: MonoBehaviour
     }
     private static void InputUpdate()
     {
-        /*
-        // Check there are saeArcadeCabinetAllInputControls set up.
-        if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls == null )
-            { SAEArcadeCabinetInput.InitializeInputs(); if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls == null ) { return; } }
-        if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols == null )
-            { SAEArcadeCabinetInput.InitializeInputs(); if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols == null ) { return; } }
-            */
-
-        // Loop through player controls checking for events.
-        //for( int i=0; i<SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols.Length; i++ )
-        //{
-        //    if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols[ i ] == null ) { continue; } //?
-        //    SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols[ i ].CheckEvents();
-        //}
-
         // Check buttons for events.
         SAEArcadeCabinetInput.CheckKeyCodeJoystickButtons();
 
@@ -144,129 +72,7 @@ public abstract class SAEArcadeCabinetInput //: MonoBehaviour
         }
     }
     
-    /*
-    private static void InitializeInputs()
-    {
-        // Attempt to load SAEArcadeCabinet.config JSON file from data path.
-        string configFileName = "SAEArcadeCabinetConfig.txt";
-        if( SAEArcadeCabinetInput.LoadConfigurationFile( Application.dataPath + Path.DirectorySeparatorChar + configFileName ) == false )
-        {
-            // If could not load from data path, try persistent data path.
-            if( SAEArcadeCabinetInput.LoadConfigurationFile( Application.persistentDataPath + Path.DirectorySeparatorChar + configFileName ) == false )
-            {
-                // Could not find a config file. Manually create SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.
-                
-                
-                // Do this from controller input manager....?
-                SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls = new SAEArcadeCabinetAllInputControls();
-
-                string[] joystickNames = Input.GetJoystickNames();
-                SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols = new SAEArcadeCabinetPlayerControls[ joystickNames.Length ];
-                for( int j=0; j < joystickNames.Length; j++ )
-                {
-                    //if( j == SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols.Length ) { break; }
-                    Debug.Log( "Set up joystick: " +joystickNames[ j ] );
-                    SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols[ j ] = new SAEArcadeCabinetPlayerControls( ( SAEArcadeCabinetColorId ) ( j + 1 ) );
-                    SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols[ j ].joystickId = ( sbyte ) ( j + 1 );
-                }
-
-                // Create new SAEArcadeCabinet.config file.
-                File.WriteAllText( Application.dataPath + Path.DirectorySeparatorChar + configFileName, JsonUtility.ToJson( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls, true ) );
-
-                Debug.Log( "[SAEArcadeCabinetInput] Created config file: " + Application.dataPath + Path.PathSeparator + configFileName );
-#if UNITY_EDITOR
-                UnityEditor.AssetDatabase.Refresh();
-#endif
-
-
-            }
-            else { Debug.Log( "[SAEArcadeCabinetInput] Config file loaded OK: " + Application.persistentDataPath + Path.PathSeparator + configFileName ); }
-        }
-        else { Debug.Log( "[SAEArcadeCabinetInput] Config file loaded OK: " + Application.dataPath + Path.PathSeparator + configFileName ); }
-    }
-    */
-
-    /*
-    private static bool LoadConfigurationFile( string path )
-    {
-        // Sanity check.
-        if( File.Exists( path ) == false ) { return false; }
-
-        // Load the config file.
-        string configStr = File.ReadAllText( path );
-        if( string.IsNullOrEmpty( configStr ) == true ) { Debug.LogWarning( "[SAEArcadeCabinetInput] Config file empty?! " + path ); return false; }
-        SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls = JsonUtility.FromJson<SAEArcadeCabinetAllInputControls>( configStr );
-
-        return true;
-    }
-
-    private static SAEArcadeCabinetPlayerControls GetPlayerControlsByColorId( SAEArcadeCabinetColorId colorId )
-    {
-        // Check there are saeArcadeCabinetAllInputControls set up.
-        if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls == null )
-            { SAEArcadeCabinetInput.InitializeInputs(); if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls == null ) { return null; } }
-        if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols == null )
-            { SAEArcadeCabinetInput.InitializeInputs(); if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols == null ) { return null; } }
-
-        // Find the player controls that match the color id.
-        foreach( SAEArcadeCabinetPlayerControls playerControls in SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols )
-        {
-            if( playerControls == null ) { continue; }
-            if( playerControls.colorId == colorId ) { return playerControls; }
-        }
-
-        return null;
-    }
-
-    public static bool IsButtonPressed( SAEArcadeCabinetColorId colorId, SAEArcadeCabinetButton buttonId )
-    {
-        // Check there are saeArcadeCabinetAllInputControls set up.
-        if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls == null )
-            { SAEArcadeCabinetInput.InitializeInputs(); if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls == null ) { return false; } }
-        if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols == null )
-            { SAEArcadeCabinetInput.InitializeInputs(); if( SAEArcadeCabinetInput.saeArcadeCabinetAllInputControls.playercontrols == null ) { return false; } }
-
-        // Get the controls that match the color id.
-        SAEArcadeCabinetPlayerControls playerControls = SAEArcadeCabinetInput.GetPlayerControlsByColorId( colorId );
-        if( playerControls == null ) { Debug.LogWarning( "[SAEArcadeCabinetInput] Could not get player controls for colorId: " +colorId.ToString() ); return false; }
-
-        // Get the actual configured button id.
-        int bId = playerControls.GetButtonId( buttonId );
-        if( bId < 0 ) { return false; }
-
-        // Check the button. Joystick1_Button_0
-if( playerControls.joystickId <= 0 ) { playerControls.joystickId = 1; } // TEST HACK
-        string buttonName = "Joystick" + playerControls.joystickId.ToString() + "_Button_" + bId.ToString();
-        //if( SAEArcadeCabinetInput.IsButtonAvailable( buttonName ) == false ) { return false; }
-        if( Input.GetButton( buttonName ) == true ) { return true; }
-        
-        return false;
-    }
-    */
-
-    /*
-    // Not great using try/catch :P
-    private static bool IsAxisAvailable( string axisName )
-    {
-        try { Input.GetAxis( axisName ); return true; }
-        catch( UnityException exception ){ return exception.Message == string.Empty; }
-    }
-    private static bool IsButtonAvailable( string btnName )
-    {
-        try { Input.GetButton( btnName ); return true; }
-        catch( UnityException exception ){ return exception.Message == string.Empty; }
-    }
-    */
-    
-// Simple KeyCode buttons /////////////////////////////////////////////////////////////////////////
-    private class PlayerInput
-    {
-        //public int playerId;
-        public List<KeyCode> buttonsPressed = new List<KeyCode>();
-        public Vector2 lastJoystickPosition;
-    }
-    private static PlayerInput[] playerInputs;
-    
+    // Called internally to check if any buttons have been pressed/held/released (For invoking events)
     private static void CheckKeyCodeJoystickButtons()
     {
         if( SAEArcadeCabinetInput.joystickKeyCodePressedButton == null ) { return; } // Nothing listening for events.
@@ -275,7 +81,11 @@ if( playerControls.joystickId <= 0 ) { playerControls.joystickId = 1; } // TEST 
         if( SAEArcadeCabinetInput.playerInputs == null )
         {
             SAEArcadeCabinetInput.playerInputs = new PlayerInput[ 4 ];
-            for( int i=0; i< SAEArcadeCabinetInput.playerInputs.Length; i++ ) { SAEArcadeCabinetInput.playerInputs[ i ] = new PlayerInput(); }
+            for( int i=0; i< SAEArcadeCabinetInput.playerInputs.Length; i++ )
+            {
+                SAEArcadeCabinetInput.playerInputs[ i ] = new PlayerInput();
+                playerInputs[ i ].playerId = SAEArcadeCabinetInput.UNKNOWNPLAYER;
+            }
         }
 
         int numOfButtons = 19;
@@ -293,22 +103,25 @@ if( playerControls.joystickId <= 0 ) { playerControls.joystickId = 1; } // TEST 
         for( int b = ( int ) KeyCode.Joystick4Button0; b < ( int ) KeyCode.Joystick4Button0 + numOfButtons; b++ ) { SAEArcadeCabinetInput.CheckKeyCodeButton( ( KeyCode ) b ); }
 
     }
+    // Called internally to check if a specific button has been pressed/held/released (For invoking events)
     private static void CheckKeyCodeButton( KeyCode keyCode )
     {
         if( SAEArcadeCabinetInput.playerInputs == null ) { return; }
 
+        // Get the joystick id from the keyCode (Eg Joystick1Button0 == 1)
         if( keyCode.ToString().StartsWith( "Joystick" ) == false ) { return; }
         string[] tmpStrParts = keyCode.ToString().Replace( "Joystick", "" ).Replace( "Button", "," ).Split( ",".ToCharArray() );
         if( tmpStrParts.Length != 2 ) { return; }
         int joystickId = int.Parse( tmpStrParts[ 0 ] );
         int buttonId = int.Parse( tmpStrParts[ 1 ] );
 
+        // Check joystick id is between 1 and 4 (inclusive)
         if( joystickId < 1 || joystickId > SAEArcadeCabinetInput.playerInputs.Length ) { return; }
 
+        // Check if the key is pressed.
         if( Input.GetKey( keyCode ) == true )
-            //{ SAEArcadeCabinetInput.joystickKeyCodePressedButton.Invoke( int.Parse( tmpStrParts[ 0 ] ), int.Parse( tmpStrParts[ 1 ] ) ); }
         {
-            //SAEArcadeCabinetInput.joystickKeyCodePressedButton.Invoke( joystickId, int.Parse( tmpStrParts[ 1 ] ) );
+            // Check if key is been held down or just pressed for the first time.
             if( SAEArcadeCabinetInput.playerInputs[ joystickId  - 1 ].buttonsPressed.Contains( keyCode ) == false )
             {
                 // Invoke pressed event.
@@ -329,16 +142,23 @@ if( playerControls.joystickId <= 0 ) { playerControls.joystickId = 1; } // TEST 
         }
     }
 
-    public static bool JoyStickButton( KeyCode keyCode ) { return Input.GetKey( keyCode ); }
 
-// Simple Axis /////////////////////////////////////////////////////////////////////////
+    // Simple Button check via Input.GetKey (Call this when polling button presses)
+    public static bool JoyStickButton( KeyCode keyCode ) { return Input.GetKey( keyCode ); }
+    public static bool JoyStickButtonDown( KeyCode keyCode ) { return Input.GetKeyDown( keyCode ); } // Same as above but for keys pressed this frame/update only.
+
+    // Simple Axis check (NOTE: Make sure the Joystick{ID}_xAxis and Joystick{ID}_yAxis axis are set up in the InputManager)
+    // Returns the current axis value for a joystick (Call this when polling axis values)
     public static float JoyStickAxis( int joystickId, bool xAxis = true )
     {
-        // Joystick1_xAxis
+        // Create the axis name string (Eg Joystick1_xAxis)
         string axisName = "Joystick" + joystickId + "_";
         if( xAxis == true ) { axisName += "xAxis"; } else { axisName += "yAxis"; }
+        
+        // Get the axis value.
         float axisValue = Input.GetAxis( axisName );
 
+        // Check last joystick position (For invoking events if joystick position has changed)
         if( SAEArcadeCabinetInput.playerInputs != null )
         {
             if( joystickId > 0 && joystickId < SAEArcadeCabinetInput.playerInputs.Length )
@@ -365,5 +185,60 @@ if( playerControls.joystickId <= 0 ) { playerControls.joystickId = 1; } // TEST 
         }
 
         return axisValue;
+    }
+
+    //private enum ConfigurationState { NOTCONFIGURING, CONFIGURING_YELLOWPLAYER, CONFIGURING_BLUEPLAYER, CONFIGURING_REDPLAYER, CONFIGURING_GREENPLAYER }
+    //private static ConfigurationState configuringState;
+    public static void ConfigureJoysticks()
+    {
+        // Sanity check.
+        //if( SAEArcadeCabinetInput.configuringState != ConfigurationState.NOTCONFIGURING )
+        //    { Debug.LogWarning( "[SAEArcadeCabinetInput] already in the process of configuring!" ); return; }
+
+        // HACK: Tap into the applications' onBeforeRender event to do joystick configuration ;D
+        Application.onBeforeRender -= SAEArcadeCabinetInput.ConfiguringJoysticks; Application.onBeforeRender += SAEArcadeCabinetInput.ConfiguringJoysticks;
+    }
+    private static void ConfiguringJoysticks()
+    {
+        // Called each frame/update.
+
+        //Debug.Log( "Configuring... " + SAEArcadeCabinetInput.configuringState );
+
+        // Call this here to draw at the end of the frame (Eg draw over everything else!)
+        //SAEArcadeCabinetInput.DrawScreen();
+
+        // INSTANTIATE A TEMP GAMEOBJECT + COMPONENT FOR UPDATE()
+        // Application.logMessageReceived << SEND log messages as msg pump mechanisim??
+    }
+    /*
+    private static IEnumerator DrawScreen()
+    {
+        yield return new WaitForEndOfFrame();
+
+        switch( SAEArcadeCabinetInput.configuringState )
+        {
+            case ConfigurationState.NOTCONFIGURING:
+                Graphics.DrawTexture( new Rect( 0f, 0f, Screen.width, Screen.height ), Texture2D.blackTexture );
+                Debug.Log( "Draw black texture" );
+                break;
+
+            case ConfigurationState.CONFIGURING_YELLOWPLAYER:
+                break;
+
+            case ConfigurationState.CONFIGURING_BLUEPLAYER:
+                break;
+
+            case ConfigurationState.CONFIGURING_REDPLAYER:
+                break;
+
+            case ConfigurationState.CONFIGURING_GREENPLAYER:
+                break;
+        }
+    }
+    */
+
+    public class TestMB : MonoBehaviour // Attach to any gameobect it the scene?... or make an empty?
+    {
+
     }
 }

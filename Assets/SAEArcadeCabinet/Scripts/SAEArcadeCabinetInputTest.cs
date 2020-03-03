@@ -19,12 +19,12 @@ public class SAEArcadeCabinetInputTest : MonoBehaviour
     private void Start()
     {
         SAEArcadeCabinetInput.ActivateInputEvents();
-
         SAEArcadeCabinetInput.joystickKeyCodePressedButton += this.ButtonKeyCodePressed;
         SAEArcadeCabinetInput.joystickKeyCodeHelddButton += this.ButtonKeyCodeHeld;
         SAEArcadeCabinetInput.joystickKeyCodeReleasedButton += this.ButtonKeyCodeReleased;
-
         SAEArcadeCabinetInput.joystickAxisChanged += this.JoystickAxisChanged;
+
+        SAEArcadeCabinetInput.ConfigureJoysticks();
     }
 
     private void Update()
