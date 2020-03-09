@@ -18,9 +18,12 @@ using UnityEngine.Events;
                     There are 3 ways to use this script:
 
                         1) Polling 
-                            - Make sure to toggle OFF useEvents on the component. Will then automatically execute ConfigurePlayers() on Start(). Otherwise you can manually call SAEArcadeCabinetInputMB.instance.ConfigurePlayers() from your own script.
-                            - You can directly call SAEArcadeCabinetInputMB.instance.PlayerPressingButton( PlayerColorId, ButtonId ) from any other script to find if a particular button for a specified player is currently pressed.
-                            - You can directly call SAEArcadeCabinetInputMB.instance.PlayerJoystickAxis( PlayerColorId ) from any other script to get the current X and Y axis position of a joystick.
+                            - Make sure to toggle OFF 'useEvents' on the component (If you only want to use polling)
+                            - You can directly call SAE.ArcadeMachine.instance.PlayerPressingButton( PlayerColorId, ButtonId, SinglePress [optional] ) from any other script to find if a particular button for a specified player is currently pressed.
+                            - You can directly call SAE.ArcadeMachine.instance.PlayerJoystickAxis( PlayerColorId ) from any other script to get the current X and Y axis position of a joystick.
+                                OR
+                            - You can directly call SAE.ArcadeMachine.PlayerPressingButtonStatic( PlayerColorId, ButtonId, SinglePress [optional] ) from any other script to find if a particular button for a specified player is currently pressed.
+                            - You can directly call SAE.ArcadeMachine.PlayerJoystickAxisStatic( PlayerColorId ) from any other script to get the current X and Y axis position of a joystick.
 
                         2) Unity events
                             - Set the exposed Unity events on the component:
@@ -38,7 +41,10 @@ using UnityEngine.Events;
                                 playerJoystickAxisChanged:          invoked when a player moves a joystick. Passes the playerColorId and axis values.
                                 configurationFinished:              invoked when player configuration finishes. Does not pass anything.
 
+
                     Notes:
+                            - Will then automatically execute ConfigurePlayers() on Start(). Otherwise you can manually call SAE.ArcadeMachine.instance.ConfigurePlayers() from your own script.
+
                             - It is possible to mix and match polling, Unity Events, and System Actions. Just make sure ConfigurePlayers() gets called before polling or listening for events.
                                 - For example, you might set up the Unity Event for configurationFinishedEvent to trigger hiding/unhiding some GameObject, 
                                     whilst listening for player button presses as System Actions, 
@@ -46,6 +52,9 @@ using UnityEngine.Events;
 
                             - Make sure legacy InputManager has been set up with X, Y axis 1-8 joysticks (KeyCode buttons seem to only go to 8 per joystick?)
 
+                            - Escape key during configuration will stop configuring (But keep already configured joysticks)
+
+                            - dontConfigureInEditor will allow you to skip configuration in the editor (Eg while setting up your game)
 */
 
 namespace SAE
@@ -128,11 +137,8 @@ namespace SAE
             this.playerInputs = new PlayerInput[ 4 ];
             for( int i = 0; i < this.playerInputs.Length; i++ ) { this.playerInputs[ i ] = new PlayerInput(); }
 
-            // Configure players.
+            // Configure players (Note: You can comment this out if you want to call SAE.ArcadeMachine.instance.ConfigurePlayers() from your own script to start configuration)
             this.ConfigurePlayers();
-
-            // Configure players if not using events.
-            //if( this.useEvents == false ) { this.ConfigurePlayers(); }
         }
 
         private void Update()
@@ -374,17 +380,6 @@ Debug.LogWarning( "[SAE.ArcadeMachine] Could not get an UNKNOWN player in config
                     if( playerInput != null )
                     {
                         // Set the first keyCode button based on playerId.
-                        //switch( playerInput.joystickId )
-                        //{
-                        //    case 1: playerInput.firstButtonKeyCodeId = 350; break;
-                        //    case 2: playerInput.firstButtonKeyCodeId = 370; break;
-                        //    case 3: playerInput.firstButtonKeyCodeId = 390; break;
-                        //    case 4: playerInput.firstButtonKeyCodeId = 410; break;
-                        //    case 5: playerInput.firstButtonKeyCodeId = 430; break;
-                        //    case 6: playerInput.firstButtonKeyCodeId = 450; break;
-                        //    case 7: playerInput.firstButtonKeyCodeId = 470; break;
-                        //    case 8: playerInput.firstButtonKeyCodeId = 490; break;
-                        //}
                         this.SetPlayerInputFirstButtonKeyCodeId( playerInput );
 
 Debug.Log( "[SAE.ArcadeMachine] " + playerInput.playerId.ToString() + " was assigned to joystick " + playerInput.joystickId );
@@ -497,13 +492,13 @@ Debug.Log( "[SAE.ArcadeMachine] Reset all player joystick mappings." );
         // Convenience static methods.
         public static bool PlayerPressingButtonStatic( PlayerColorId playerId, int buttonId, bool singlePress = false )
         {
-            // Make sure an ArcadeMachine.input singleton exists.
+            // Make sure a SAE.ArcadeMachine.input singleton exists.
             if( SAE.ArcadeMachine.input == null ) { return false; }
             return SAE.ArcadeMachine.input.PlayerPressingButton( playerId , buttonId, singlePress );
         }
         public static Vector2 PlayerJoystickAxisStatic( PlayerColorId playerId )
         {
-            // Make sure an ArcadeMachine.input singleton exists.
+            // Make sure a SAE.ArcadeMachine.input singleton exists.
             if( SAE.ArcadeMachine.input == null ) { return Vector2.zero; }
             return SAE.ArcadeMachine.input.PlayerJoystickAxis( playerId );
         }
