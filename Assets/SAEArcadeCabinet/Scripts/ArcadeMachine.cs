@@ -102,6 +102,8 @@ namespace SAE
         public bool useEvents = true;                                               // Allow invoking of events for button presses, axis changes etc
         public KeyCode resetPlayersKey = KeyCode.F11;                               // Clear all players joystick mapping and trigger ConfigurePlayers().
 
+        public bool dontConfigureInEditor;                                          // If true, will just assign joysticks as they are detected automatically.
+
         private PlayerInput[] playerInputs;                                         // The 4 player inputs representing the joysticks & buttons.
         private bool configuring;                                                   // Track the configuring state.
 
@@ -126,8 +128,11 @@ namespace SAE
             this.playerInputs = new PlayerInput[ 4 ];
             for( int i = 0; i < this.playerInputs.Length; i++ ) { this.playerInputs[ i ] = new PlayerInput(); }
 
+            // Configure players.
+            this.ConfigurePlayers();
+
             // Configure players if not using events.
-            if( this.useEvents == false ) { this.ConfigurePlayers(); }
+            //if( this.useEvents == false ) { this.ConfigurePlayers(); }
         }
 
         private void Update()
@@ -220,16 +225,34 @@ namespace SAE
 
         public void ConfigurePlayers()
         {
+            // Set configuring state.
             this.configuring = true;
+
+            // Check if configuring in the editor.
+            if( Application.isEditor == true && this.dontConfigureInEditor == true )
+            {
+                string[] allJoystickNames = Input.GetJoystickNames();
+                Debug.Log( "[SAE.ArcadeMachine] "+allJoystickNames.Length  +" joysticks autoconfiguring in editor." );
+
+                // Automatically set the detected joysticks using the order they are detected in (Eg first joystick will be yellow player etc)
+                for( int i = 0; i < allJoystickNames.Length; i++ )
+                {
+                    if( i >= this.playerInputs.Length ) { this.FinishConfiguration(); return; }
+                    if( i >= Enum.GetNames( typeof( PlayerColorId ) ).Length ) { this.FinishConfiguration(); return; }
+
+                    this.playerInputs[ i ].playerId = ( PlayerColorId ) i + 1;
+                    this.playerInputs[ i ].joystickId = i + 1;
+                    this.SetPlayerInputFirstButtonKeyCodeId( this.playerInputs[ i ] );
+                }
+                this.FinishConfiguration();
+                return;
+            }
 
             // Check if skipping configuring any other players.
             if( Input.GetKeyDown( KeyCode.Escape ) == true )
             {
-                ArcadeMachine.configurationFinished?.Invoke();
-                this.configurationFinishedEvent?.Invoke();
-                this.configuring = false;
-                this.nextEventListenTime = Time.unscaledTime + 2f;
-                Debug.Log( "[SAE.ArcadeMachine] Finished configuration." );
+                this.FinishConfiguration();
+                return;
             }
 
             // Find the next player to configure.
@@ -351,34 +374,52 @@ Debug.LogWarning( "[SAE.ArcadeMachine] Could not get an UNKNOWN player in config
                     if( playerInput != null )
                     {
                         // Set the first keyCode button based on playerId.
-                        switch( playerInput.joystickId )
-                        {
-                            case 1: playerInput.firstButtonKeyCodeId = 350; break;
-                            case 2: playerInput.firstButtonKeyCodeId = 370; break;
-                            case 3: playerInput.firstButtonKeyCodeId = 390; break;
-                            case 4: playerInput.firstButtonKeyCodeId = 410; break;
-                            case 5: playerInput.firstButtonKeyCodeId = 430; break;
-                            case 6: playerInput.firstButtonKeyCodeId = 450; break;
-                            case 7: playerInput.firstButtonKeyCodeId = 470; break;
-                            case 8: playerInput.firstButtonKeyCodeId = 490; break;
-                        }
+                        //switch( playerInput.joystickId )
+                        //{
+                        //    case 1: playerInput.firstButtonKeyCodeId = 350; break;
+                        //    case 2: playerInput.firstButtonKeyCodeId = 370; break;
+                        //    case 3: playerInput.firstButtonKeyCodeId = 390; break;
+                        //    case 4: playerInput.firstButtonKeyCodeId = 410; break;
+                        //    case 5: playerInput.firstButtonKeyCodeId = 430; break;
+                        //    case 6: playerInput.firstButtonKeyCodeId = 450; break;
+                        //    case 7: playerInput.firstButtonKeyCodeId = 470; break;
+                        //    case 8: playerInput.firstButtonKeyCodeId = 490; break;
+                        //}
+                        this.SetPlayerInputFirstButtonKeyCodeId( playerInput );
 
 Debug.Log( "[SAE.ArcadeMachine] " + playerInput.playerId.ToString() + " was assigned to joystick " + playerInput.joystickId );
 
                         // Check if finished configuring (Eg no more UNKOWN players)
-                        if( p == maxPlayers )
-                        {
-                            ArcadeMachine.configurationFinished?.Invoke();
-                            this.configurationFinishedEvent?.Invoke();
-                            this.configuring = false;
-                            this.nextEventListenTime = Time.unscaledTime + 2f;
-Debug.Log( "[SAE.ArcadeMachine] Finished configuration." );
-                        }
+                        if( p == maxPlayers ) { this.FinishConfiguration(); }
                     }
 
                     return;
                 }
             }
+        }
+        private void SetPlayerInputFirstButtonKeyCodeId( PlayerInput playerInput )
+        {
+            if( playerInput == null ) { return; }
+            // Set the first keyCode button based on playerId.
+            switch( playerInput.joystickId )
+            {
+                case 1: playerInput.firstButtonKeyCodeId = 350; break;
+                case 2: playerInput.firstButtonKeyCodeId = 370; break;
+                case 3: playerInput.firstButtonKeyCodeId = 390; break;
+                case 4: playerInput.firstButtonKeyCodeId = 410; break;
+                case 5: playerInput.firstButtonKeyCodeId = 430; break;
+                case 6: playerInput.firstButtonKeyCodeId = 450; break;
+                case 7: playerInput.firstButtonKeyCodeId = 470; break;
+                case 8: playerInput.firstButtonKeyCodeId = 490; break;
+            }
+        }
+        private void FinishConfiguration()
+        {
+            ArcadeMachine.configurationFinished?.Invoke();
+            this.configurationFinishedEvent?.Invoke();
+            this.configuring = false;
+            this.nextEventListenTime = Time.unscaledTime + 2f;
+            Debug.Log( "[SAE.ArcadeMachine] Finished configuration." );
         }
 
         private bool GetKeyCodeJoystickAndButtonId( KeyCode keyCode, ref int joystickId, ref int buttonId )
@@ -421,7 +462,7 @@ Debug.Log( "[SAE.ArcadeMachine] Reset all player joystick mappings." );
         }
 
 
-        public bool PlayerPressingButton( PlayerColorId playerId, int buttonId )
+        public bool PlayerPressingButton( PlayerColorId playerId, int buttonId, bool singlePress = false )
         {
             // Sanity checks.
             if( this.playerInputs == null ) { return false; }
@@ -434,7 +475,8 @@ Debug.Log( "[SAE.ArcadeMachine] Reset all player joystick mappings." );
             if( playerInput == null ) { return false; }
 
             // Calculate the button keyCode id and check the key.
-            return Input.GetKey( ( KeyCode ) playerInput.firstButtonKeyCodeId + buttonId );
+            if( singlePress == false ) { return Input.GetKey( ( KeyCode ) playerInput.firstButtonKeyCodeId + buttonId ); }
+            else { return Input.GetKeyDown( ( KeyCode ) playerInput.firstButtonKeyCodeId + buttonId ); }
         }
         public Vector2 PlayerJoystickAxis( PlayerColorId playerId )
         {
@@ -453,11 +495,11 @@ Debug.Log( "[SAE.ArcadeMachine] Reset all player joystick mappings." );
         }
 
         // Convenience static methods.
-        public static bool PlayerPressingButtonStatic( PlayerColorId playerId, int buttonId )
+        public static bool PlayerPressingButtonStatic( PlayerColorId playerId, int buttonId, bool singlePress = false )
         {
             // Make sure an ArcadeMachine.input singleton exists.
             if( SAE.ArcadeMachine.input == null ) { return false; }
-            return SAE.ArcadeMachine.input.PlayerPressingButton( playerId , buttonId );
+            return SAE.ArcadeMachine.input.PlayerPressingButton( playerId , buttonId, singlePress );
         }
         public static Vector2 PlayerJoystickAxisStatic( PlayerColorId playerId )
         {

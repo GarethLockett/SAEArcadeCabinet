@@ -37,6 +37,16 @@ namespace SAE
             axisValues = SAE.ArcadeMachine.PlayerJoystickAxisStatic( ArcadeMachine.PlayerColorId.GREEN_PLAYER );
             this.greenPlayer.velocity = new Vector3( axisValues.x, 0f, -axisValues.y ) * this.moveSpeed;
 
+            // Poll SAE.ArcadeMachine for YELLOW players' button 0 (True if held down)
+            if( SAE.ArcadeMachine.PlayerPressingButtonStatic( ArcadeMachine.PlayerColorId.YELLOW_PLAYER, 0 ) == true )
+            { Debug.Log( "YELLOW player pressed button 0 (Held down)" ); }
+
+            // Poll SAE.ArcadeMachine for YELLOW players' button 1 (True if pressed once .. eg. not held down)
+            if( SAE.ArcadeMachine.PlayerPressingButtonStatic( ArcadeMachine.PlayerColorId.YELLOW_PLAYER, 1, true ) == true )
+            { Debug.Log( "YELLOW player pressed button 1 (Not held down)" ); }
+
+
+
             // Check for offscreen loop.
             Transform[] allPlayerTransforms = { this.yellowPlayer.transform, this.bluePlayer.transform, this.redPlayer.transform, this.greenPlayer.transform };
             foreach( Transform playerTransform in allPlayerTransforms )

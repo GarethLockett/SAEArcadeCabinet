@@ -60,3 +60,4 @@ MonoBehaviour:
       m_Calls: []
   useEvents: 1
   resetPlayersKey: 292
+  dontConfigureInEditor: 1
