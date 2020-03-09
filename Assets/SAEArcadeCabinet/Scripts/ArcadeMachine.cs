@@ -99,7 +99,7 @@ namespace SAE
 
         // Properties
         public static ArcadeMachine input;                                          // Singleton reference.
-        public bool useEvents;                                                      // Allow invoking of events for button presses, axis changes etc
+        public bool useEvents = true;                                               // Allow invoking of events for button presses, axis changes etc
         public KeyCode resetPlayersKey = KeyCode.F11;                               // Clear all players joystick mapping and trigger ConfigurePlayers().
 
         private PlayerInput[] playerInputs;                                         // The 4 player inputs representing the joysticks & buttons.
@@ -147,6 +147,7 @@ namespace SAE
         {
             // Sanity check. Check playerInputs have been created/exist (Should have been set up in Start)
             if( this.playerInputs == null ) { return; }
+            if( this.configuring == true ) { return; }
 
             // Check for any button presses.
             int startKeyCodeId = ( int ) KeyCode.Joystick1Button0;  // 350
@@ -221,9 +222,19 @@ namespace SAE
         {
             this.configuring = true;
 
+            // Check if skipping configuring any other players.
+            if( Input.GetKeyDown( KeyCode.Escape ) == true )
+            {
+                ArcadeMachine.configurationFinished?.Invoke();
+                this.configurationFinishedEvent?.Invoke();
+                this.configuring = false;
+                this.nextEventListenTime = Time.unscaledTime + 2f;
+                Debug.Log( "[SAE.ArcadeMachine] Finished configuration." );
+            }
+
             // Find the next player to configure.
-            int maxPlayers = Enum.GetNames( typeof( PlayerColorId ) ).Length;
-maxPlayers = 2; // TESTING
+            int maxPlayers = Enum.GetNames( typeof( PlayerColorId ) ).Length -1;
+//maxPlayers = 2; // TESTING
             for( int p = 1; p < maxPlayers + 1; p++ )
             {
                 PlayerColorId playerId = ( PlayerColorId ) p;
@@ -416,6 +427,7 @@ Debug.Log( "[SAE.ArcadeMachine] Reset all player joystick mappings." );
             if( this.playerInputs == null ) { return false; }
             if( playerId == PlayerColorId.UNKNOWN ) { return false; }
             if( buttonId < 0 ) { return false; }
+            if( this.configuring == true ) { return false; }
 
             // Get the player input via id.
             PlayerInput playerInput = this.GetPlayerInputById( playerId );
@@ -429,6 +441,7 @@ Debug.Log( "[SAE.ArcadeMachine] Reset all player joystick mappings." );
             // Sanity checks.
             if( this.playerInputs == null ) { return Vector2.zero; }
             if( playerId == PlayerColorId.UNKNOWN ) { return Vector2.zero; }
+            if( this.configuring == true ) { return Vector2.zero; }
 
             // Get the player input via id.
             PlayerInput playerInput = this.GetPlayerInputById( playerId );
@@ -437,6 +450,20 @@ Debug.Log( "[SAE.ArcadeMachine] Reset all player joystick mappings." );
 
             string axisName = "Joystick" + playerInput.joystickId; // Eg Joystick1_xAxis
             return new Vector2( Input.GetAxis( axisName + "_xAxis" ), Input.GetAxis( axisName + "_yAxis" ) );
+        }
+
+        // Convenience static methods.
+        public static bool PlayerPressingButtonStatic( PlayerColorId playerId, int buttonId )
+        {
+            // Make sure an ArcadeMachine.input singleton exists.
+            if( SAE.ArcadeMachine.input == null ) { return false; }
+            return SAE.ArcadeMachine.input.PlayerPressingButton( playerId , buttonId );
+        }
+        public static Vector2 PlayerJoystickAxisStatic( PlayerColorId playerId )
+        {
+            // Make sure an ArcadeMachine.input singleton exists.
+            if( SAE.ArcadeMachine.input == null ) { return Vector2.zero; }
+            return SAE.ArcadeMachine.input.PlayerJoystickAxis( playerId );
         }
     }
 }
