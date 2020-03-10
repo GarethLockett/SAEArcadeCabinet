@@ -8,7 +8,7 @@
                     Includes examples of polling and System Action events.
 */
 
-public class SAEArcadeCabinetInputTestMB : MonoBehaviour
+public class SAEArcadeCabinetInputTest : MonoBehaviour
 {
     // Methods
     private void Start()
